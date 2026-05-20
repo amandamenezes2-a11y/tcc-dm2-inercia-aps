@@ -1,0 +1,23 @@
+# ambiente virtual
+.venv/
+
+# cache python
+__pycache__/
+*.pyc
+
+# banco local
+*.duckdb
+*.wal
+
+# arquivos grandes
+data/raw/
+
+# streamlit
+.streamlit/
+
+# sistema
+.DS_Store
+Thumbs.db
+
+# vscode
+.vscode/
