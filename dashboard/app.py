@@ -9,21 +9,35 @@ import seaborn as sns
 # ============================================================
 
 st.set_page_config(
-    page_title="Vigilância DM2 APS",
+    page_title="Vigilância Clínica DM2",
+    page_icon="📊",
     layout="wide"
 )
 
-st.title("📊 Vigilância Clínica DM2 - APS")
-st.markdown("---")
+# ============================================================
+# SIDEBAR
+# ============================================================
+
+st.sidebar.title("📌 Vigilância Clínica APS")
+
+st.sidebar.markdown("""
+Sistema de monitoramento longitudinal
+de inércia terapêutica em Diabetes Mellitus tipo 2.
+""")
+
+st.sidebar.markdown("---")
 
 # ============================================================
 # CONEXÃO DUCKDB
 # ============================================================
 
-conn = duckdb.connect("data/duckdb/inercia_aps.duckdb")
+conn = duckdb.connect(
+    "data/duckdb/inercia_aps.duckdb",
+    read_only=True
+)
 
 # ============================================================
-# CARREGANDO DADOS
+# CARREGAMENTO DOS DADOS
 # ============================================================
 
 df = conn.execute("""
@@ -34,7 +48,74 @@ FROM tb_inercia_dm2
 """).fetchdf()
 
 # ============================================================
-# INDICADORES PRINCIPAIS
+# FILTRO SEXO (SE EXISTIR)
+# ============================================================
+
+if "sexo" in df.columns:
+
+    sexo_filtro = st.sidebar.multiselect(
+        "Sexo",
+        df["sexo"].dropna().unique(),
+        default=df["sexo"].dropna().unique()
+    )
+
+    df = df[
+        df["sexo"].isin(sexo_filtro)
+    ]
+
+# ============================================================
+# FILTRO HBA1C
+# ============================================================
+
+hba1c_min = st.sidebar.slider(
+    "HbA1c mínima",
+    4.0,
+    20.0,
+    7.0
+)
+
+df = df[
+    df["hba1c"] >= hba1c_min
+]
+
+# ============================================================
+# CLASSIFICAÇÃO DE RISCO
+# ============================================================
+
+def classificar_risco(hba1c):
+
+    if hba1c < 7:
+        return "Baixo"
+
+    elif hba1c < 9:
+        return "Moderado"
+
+    elif hba1c < 10:
+        return "Alto"
+
+    else:
+        return "Crítico"
+
+df["risco_clinico"] = (
+    df["hba1c"]
+    .apply(classificar_risco)
+)
+
+# ============================================================
+# TÍTULO
+# ============================================================
+
+st.title("📊 Vigilância Clínica DM2 - APS")
+
+st.markdown("""
+Dashboard operacional para monitoramento longitudinal
+de indivíduos com Diabetes Mellitus tipo 2.
+""")
+
+st.markdown("---")
+
+# ============================================================
+# KPIs
 # ============================================================
 
 prevalencia = (
@@ -45,19 +126,26 @@ prevalencia = (
 
 hba1c_media = df["hba1c"].mean()
 
-total_pacientes = df["co_prontuario"].nunique()
+if "co_prontuario" in df.columns:
+    pacientes = df["co_prontuario"].nunique()
+else:
+    pacientes = len(df)
 
-total_eventos = len(df)
+eventos = len(df)
+
+criticos = len(
+    df[df["risco_clinico"] == "Crítico"]
+)
 
 # ============================================================
-# MÉTRICAS
+# CARDS
 # ============================================================
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3, col4, col5 = st.columns(5)
 
 col1.metric(
-    "Prevalência de Inércia",
-    f"{prevalencia:.2f}%"
+    "Prevalência",
+    f"{prevalencia:.1f}%"
 )
 
 col2.metric(
@@ -67,112 +155,127 @@ col2.metric(
 
 col3.metric(
     "Pacientes",
-    total_pacientes
+    pacientes
 )
 
 col4.metric(
     "Eventos",
-    total_eventos
+    eventos
+)
+
+col5.metric(
+    "Risco Crítico",
+    criticos
 )
 
 st.markdown("---")
 
 # ============================================================
-# DISTRIBUIÇÃO HbA1c
+# GRÁFICOS
 # ============================================================
 
-
-st.subheader("Distribuição HbA1c")
-
-fig, ax = plt.subplots(figsize=(10,5))
-
-# remove valores absurdos
-df_plot = df[
-    (df["hba1c"] >= 4) &
-    (df["hba1c"] <= 20)
-]
-
-sns.histplot(
-    data=df_plot,
-    x="hba1c",
-    bins=20,
-    kde=True,
-    ax=ax
-)
-
-# linha meta terapêutica
-ax.axvline(
-    7,
-    color="green",
-    linestyle="--",
-    linewidth=2,
-    label="Meta terapêutica"
-)
-
-# linha alto risco
-ax.axvline(
-    9,
-    color="red",
-    linestyle="--",
-    linewidth=2,
-    label="Alto risco"
-)
-
-ax.set_xlabel("HbA1c (%)")
-ax.set_ylabel("Frequência")
-ax.set_title("Distribuição de HbA1c")
-ax.legend()
-
-st.pyplot(fig)
-
+col_graf1, col_graf2 = st.columns(2)
 
 # ============================================================
-# INÉRCIA
+# HISTOGRAMA HBA1C
 # ============================================================
 
-st.subheader("Inércia Terapêutica")
+with col_graf1:
 
-contagem = (
-    df["inercia_terapeutica"]
-    .value_counts()
-)
+    st.subheader("Distribuição HbA1c")
 
-fig2, ax2 = plt.subplots()
+    fig, ax = plt.subplots(figsize=(8,5))
 
-ax2.pie(
-    contagem,
-    labels=["Inércia", "Sem Inércia"],
-    autopct="%1.1f%%"
-)
+    sns.histplot(
+        data=df,
+        x="hba1c",
+        bins=20,
+        kde=True,
+        ax=ax
+    )
 
-st.pyplot(fig2)
+    ax.axvline(
+        7,
+        color="green",
+        linestyle="--",
+        linewidth=2,
+        label="Meta terapêutica"
+    )
+
+    ax.axvline(
+        9,
+        color="red",
+        linestyle="--",
+        linewidth=2,
+        label="Alto risco"
+    )
+
+    ax.set_xlabel("HbA1c (%)")
+    ax.set_ylabel("Frequência")
+
+    ax.legend()
+
+    st.pyplot(fig)
+
+# ============================================================
+# GRÁFICO DE RISCO
+# ============================================================
+
+with col_graf2:
+
+    st.subheader("Estratificação de Risco")
+
+    risco = (
+        df["risco_clinico"]
+        .value_counts()
+    )
+
+    fig2, ax2 = plt.subplots(figsize=(6,6))
+
+    ax2.pie(
+        risco,
+        labels=risco.index,
+        autopct="%1.1f%%"
+    )
+
+    st.pyplot(fig2)
+
+st.markdown("---")
 
 # ============================================================
 # PACIENTES PRIORITÁRIOS
 # ============================================================
 
-st.subheader("Pacientes Prioritários")
+st.subheader("🚨 Pacientes Prioritários")
 
-criticos = df[
+prioritarios = df[
     (df["hba1c"] >= 10)
     &
     (df["inercia_terapeutica"] == True)
 ]
 
 st.dataframe(
-    criticos.head(50)
+    prioritarios,
+    use_container_width=True
 )
 
 # ============================================================
-# TABELA COMPLETA
+# DOWNLOAD
 # ============================================================
 
-st.subheader("Tabela Analítica")
+csv = prioritarios.to_csv(index=False)
 
-st.dataframe(df.head(100))
+st.download_button(
+    "📥 Download CSV",
+    csv,
+    "pacientes_prioritarios.csv",
+    "text/csv"
+)
 
 # ============================================================
 # FINAL
 # ============================================================
 
-st.success("Dashboard carregado com sucesso!")
+st.markdown("---")
+
+st.success("Sistema operacional carregado com sucesso!")
