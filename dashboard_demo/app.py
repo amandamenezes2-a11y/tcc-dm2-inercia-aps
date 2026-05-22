@@ -3,6 +3,7 @@ import duckdb
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np
 
 # =========================================================
 # CONFIGURAÇÃO
@@ -13,12 +14,16 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("📊 Vigilância Clínica DM2 - APS")
+# =========================================================
+# TÍTULO
+# =========================================================
+
+st.title("📊 Vigilância Clínica DM2")
 
 st.markdown(
     """
-    Dashboard demonstrativa para vigilância clínica de inércia terapêutica
-    em Diabetes Mellitus tipo 2 na Atenção Primária à Saúde.
+    Dashboard operacional para monitoramento longitudinal
+    de indivíduos com Diabetes Mellitus tipo 2.
     """
 )
 
@@ -38,7 +43,6 @@ if MODO_DEMO:
         "data/demo/coorte_demo.csv"
     )
 
-    # coluna fake para manter compatibilidade
     df["co_prontuario"] = range(1, len(df) + 1)
 
 else:
@@ -53,15 +57,13 @@ else:
     """).fetchdf()
 
 # =========================================================
-# AJUSTES DE COLUNAS
+# PADRONIZAÇÃO
 # =========================================================
 
 df.columns = [c.lower() for c in df.columns]
 
-# cria sexo se não existir
+# cria sexo fake caso não exista
 if "sexo" not in df.columns:
-
-    import numpy as np
 
     np.random.seed(42)
 
@@ -70,24 +72,43 @@ if "sexo" not in df.columns:
         size=len(df)
     )
 
-# cria coluna de inércia se não existir
+# cria inércia terapêutica
 if "inercia_terapeutica" not in df.columns:
 
-    if "hba1c" in df.columns:
-        df["inercia_terapeutica"] = (
-            df["hba1c"] >= 8.0
-        ).astype(int)
+    df["inercia_terapeutica"] = (
+        df["hba1c"] >= 8
+    ).astype(int)
+
+# =========================================================
+# CLASSIFICAÇÃO DE RISCO
+# =========================================================
+
+def classificar_risco(hba1c):
+
+    if hba1c >= 11:
+        return "Crítico"
+
+    elif hba1c >= 9:
+        return "Moderado"
+
+    else:
+        return "Alto"
+
+df["risco"] = df["hba1c"].apply(
+    classificar_risco
+)
 
 # =========================================================
 # SIDEBAR
 # =========================================================
 
-st.sidebar.markdown("## 📌 Vigilância DM2 APS")
+st.sidebar.markdown("## 📌 Vigilância Clínica APS")
 
 st.sidebar.markdown(
     """
-    Dashboard demonstrativa para vigilância clínica de inércia terapêutica
-    em Diabetes Mellitus tipo 2 na Atenção Primária à Saúde.
+    Sistema de monitoramento longitudinal
+    de inércia terapêutica
+    em Diabetes Mellitus tipo 2.
     """
 )
 
@@ -110,7 +131,9 @@ hba1c_min = st.sidebar.slider(
 
 df = df[df["hba1c"] >= hba1c_min]
 
-st.sidebar.info("Base demonstrativa anonimizada.")
+st.sidebar.info(
+    "Base demonstrativa anonimizada."
+)
 
 # =========================================================
 # MÉTRICAS
@@ -122,38 +145,56 @@ prevalencia = (
 
 hba1c_media = df["hba1c"].mean()
 
-pacientes = len(df)
+pacientes = len(
+    df["co_prontuario"].unique()
+)
 
 eventos = len(df)
+
+risco_critico = (
+    df[df["risco"] == "Crítico"]
+    .shape[0]
+)
 
 # =========================================================
 # KPIs
 # =========================================================
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3, col4, col5 = st.columns(5)
 
 with col1:
+
     st.metric(
-        "Prevalência de Inércia",
+        "Prevalência",
         f"{prevalencia:.1f}%"
     )
 
 with col2:
+
     st.metric(
         "HbA1c Média",
         f"{hba1c_media:.2f}"
     )
 
 with col3:
+
     st.metric(
         "Pacientes",
         pacientes
     )
 
 with col4:
+
     st.metric(
         "Eventos",
         eventos
+    )
+
+with col5:
+
+    st.metric(
+        "Risco Crítico",
+        risco_critico
     )
 
 # =========================================================
@@ -162,15 +203,17 @@ with col4:
 
 col1, col2 = st.columns(2)
 
-# ---------------------------------------------------------
+# =========================================================
 # HISTOGRAMA
-# ---------------------------------------------------------
+# =========================================================
 
 with col1:
 
     st.subheader("Distribuição HbA1c")
 
-    fig, ax = plt.subplots(figsize=(8, 5))
+    fig, ax = plt.subplots(
+        figsize=(8, 5)
+    )
 
     sns.histplot(
         df["hba1c"],
@@ -201,44 +244,39 @@ with col1:
 
     st.pyplot(fig)
 
-# ---------------------------------------------------------
-# GRÁFICO PIZZA
-# ---------------------------------------------------------
+# =========================================================
+# PIZZA IGUAL À DASHBOARD REAL
+# =========================================================
 
 with col2:
 
-    fig2, ax2 = plt.subplots(figsize=(7, 7))
+    st.subheader("Estratificação de Risco")
 
-    labels = ["Inércia", "Sem Inércia"]
+    risco_counts = (
+        df["risco"]
+        .value_counts()
+    )
 
-    sizes = [
-        df["inercia_terapeutica"].sum(),
-        len(df) - df["inercia_terapeutica"].sum()
+    labels = risco_counts.index
+
+    sizes = risco_counts.values
+
+    colors = [
+        "#1f77b4",
+        "#ff7f0e",
+        "#2ca02c"
     ]
 
-    colors = ["#1f77b4", "#ff7f0e"]
+    fig2, ax2 = plt.subplots(
+        figsize=(8, 8)
+    )
 
     ax2.pie(
         sizes,
         labels=labels,
         autopct="%1.1f%%",
-        startangle=140,
-        colors=colors,
-        wedgeprops={
-            "edgecolor": "white",
-            "linewidth": 2
-        },
-        textprops={
-            "fontsize": 12
-        }
-    )
-
-    ax2.axis("equal")
-
-    ax2.set_title(
-        "Inércia Terapêutica",
-        fontsize=18,
-        fontweight="bold"
+        startangle=150,
+        colors=colors
     )
 
     st.pyplot(fig2)
