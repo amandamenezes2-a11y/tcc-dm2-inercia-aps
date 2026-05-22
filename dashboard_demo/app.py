@@ -10,7 +10,7 @@ import numpy as np
 # =========================================================
 
 st.set_page_config(
-    page_title="Vigilância DM2 APS",
+    page_title="Vigilância DM2 APS - DEMO",
     layout="wide"
 )
 
@@ -18,12 +18,15 @@ st.set_page_config(
 # TÍTULO
 # =========================================================
 
-st.title("📊 Vigilância Clínica DM2")
+st.title("📊 Vigilância Clínica DM2 — DEMO")
 
 st.markdown(
     """
-    Dashboard operacional para monitoramento longitudinal
-    de indivíduos com Diabetes Mellitus tipo 2.
+    ### 🔒 Ambiente Demonstrativo
+
+    Esta versão utiliza uma base sintética e anonimizada,
+    desenvolvida exclusivamente para demonstração pública
+    da plataforma de vigilância clínica em Diabetes Mellitus tipo 2.
     """
 )
 
@@ -43,7 +46,11 @@ if MODO_DEMO:
         "data/demo/coorte_demo.csv"
     )
 
-    df["co_prontuario"] = range(1, len(df) + 1)
+    # cria identificador fictício
+    df["co_prontuario"] = range(
+        1,
+        len(df) + 1
+    )
 
 else:
 
@@ -60,9 +67,12 @@ else:
 # PADRONIZAÇÃO
 # =========================================================
 
-df.columns = [c.lower() for c in df.columns]
+df.columns = [
+    c.lower()
+    for c in df.columns
+]
 
-# cria sexo fake caso não exista
+# cria sexo sintético
 if "sexo" not in df.columns:
 
     np.random.seed(42)
@@ -72,7 +82,7 @@ if "sexo" not in df.columns:
         size=len(df)
     )
 
-# cria inércia terapêutica
+# cria variável de inércia
 if "inercia_terapeutica" not in df.columns:
 
     df["inercia_terapeutica"] = (
@@ -102,26 +112,35 @@ df["risco"] = df["hba1c"].apply(
 # SIDEBAR
 # =========================================================
 
-st.sidebar.markdown("## 📌 Vigilância Clínica APS")
+st.sidebar.markdown(
+    "## 🔒 Dashboard DEMO"
+)
 
 st.sidebar.markdown(
     """
-    Sistema de monitoramento longitudinal
-    de inércia terapêutica
-    em Diabetes Mellitus tipo 2.
+    Ambiente público demonstrativo
+    da plataforma de vigilância clínica
+    para Diabetes Mellitus tipo 2.
+
+    Todos os dados apresentados são
+    sintéticos e anonimizados.
     """
 )
 
-# filtro sexo
+# =========================================================
+# FILTROS
+# =========================================================
+
 sexo = st.sidebar.multiselect(
     "Sexo",
     options=df["sexo"].unique(),
     default=df["sexo"].unique()
 )
 
-df = df[df["sexo"].isin(sexo)]
+df = df[
+    df["sexo"].isin(sexo)
+]
 
-# filtro HbA1c
 hba1c_min = st.sidebar.slider(
     "HbA1c mínima",
     min_value=float(df["hba1c"].min()),
@@ -129,7 +148,9 @@ hba1c_min = st.sidebar.slider(
     value=7.0
 )
 
-df = df[df["hba1c"] >= hba1c_min]
+df = df[
+    df["hba1c"] >= hba1c_min
+]
 
 st.sidebar.info(
     "Base demonstrativa anonimizada."
@@ -143,7 +164,9 @@ prevalencia = (
     df["inercia_terapeutica"].mean() * 100
 )
 
-hba1c_media = df["hba1c"].mean()
+hba1c_media = (
+    df["hba1c"].mean()
+)
 
 pacientes = len(
     df["co_prontuario"].unique()
@@ -198,7 +221,7 @@ with col5:
     )
 
 # =========================================================
-# GRÁFICOS
+# LAYOUT DOS GRÁFICOS
 # =========================================================
 
 col1, col2 = st.columns(2)
@@ -209,7 +232,9 @@ col1, col2 = st.columns(2)
 
 with col1:
 
-    st.subheader("Distribuição HbA1c")
+    st.subheader(
+        "Distribuição HbA1c"
+    )
 
     fig, ax = plt.subplots(
         figsize=(8, 5)
@@ -236,21 +261,27 @@ with col1:
         label="Alto risco"
     )
 
-    ax.set_xlabel("HbA1c (%)")
+    ax.set_xlabel(
+        "HbA1c (%)"
+    )
 
-    ax.set_ylabel("Frequência")
+    ax.set_ylabel(
+        "Frequência"
+    )
 
     ax.legend()
 
     st.pyplot(fig)
 
 # =========================================================
-# PIZZA IGUAL À DASHBOARD REAL
+# GRÁFICO PIZZA
 # =========================================================
 
 with col2:
 
-    st.subheader("Estratificação de Risco")
+    st.subheader(
+        "Estratificação de Risco"
+    )
 
     risco_counts = (
         df["risco"]
