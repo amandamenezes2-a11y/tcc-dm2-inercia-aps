@@ -272,3 +272,31 @@ Técnica Ambiental — IFBA
 GitHub:
 
 https://github.com/amandamenezes2-a11y/tcc-dm2-inercia-aps
+
+---
+
+## Dashboard pública
+
+Acesse a versão demonstrativa da plataforma:
+
+🔗(https://tcc-dm2-inercia-aps-szv8w2yvtxcwqitq5s92vn.streamlit.app/)
+
+---
+
+## Tecnologias utilizadas
+
+- Python
+- Streamlit
+- DuckDB
+- Pandas
+- Scikit-learn
+- Matplotlib
+- Seaborn
+
+---
+
+## Objetivo
+
+Desenvolver uma plataforma longitudinal de vigilância clínica
+para identificação de inércia terapêutica em Diabetes Mellitus tipo 2
+na Atenção Primária à Saúde.
