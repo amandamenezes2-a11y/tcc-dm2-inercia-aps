@@ -175,13 +175,36 @@ with col_graf2:
         .value_counts()
     )
 
-    fig2, ax2 = plt.subplots(figsize=(6,6))
+    fig2, ax2 = plt.subplots(figsize=(7,7))
 
-    ax2.pie(
-        contagem,
-        labels=["Inércia", "Sem Inércia"],
-        autopct="%1.1f%%"
-    )
+labels = ["Inércia", "Sem Inércia"]
+
+sizes = [
+    df["inercia_terapeutica"].sum(),
+    len(df) - df["inercia_terapeutica"].sum()
+]
+
+colors = ["#1f77b4", "#ff7f0e"]
+
+ax2.pie(
+    sizes,
+    labels=labels,
+    autopct="%1.1f%%",
+    startangle=140,
+    colors=colors,
+    wedgeprops={"edgecolor": "white", "linewidth": 2},
+    textprops={"fontsize": 12}
+)
+
+ax2.axis("equal")
+
+ax2.set_title(
+    "Inércia Terapêutica",
+    fontsize=18,
+    fontweight="bold"
+)
+
+st.pyplot(fig2)
 
     st.pyplot(fig2)
 
