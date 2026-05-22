@@ -38,7 +38,7 @@ FROM tb_inercia_dm2
 """).fetchdf()
 
 # ============================================================
-# FEATURES
+# FEATURES DINÂMICAS
 # ============================================================
 
 features = []
@@ -51,10 +51,6 @@ if "hba1c" in df.columns:
 
 if "n_classes_pre" in df.columns:
     features.append("n_classes_pre")
-
-# ============================================================
-# TARGET
-# ============================================================
 
 target = "inercia_terapeutica"
 
@@ -71,7 +67,7 @@ X = base[features]
 y = base[target]
 
 # ============================================================
-# TREINO / TESTE
+# TREINO
 # ============================================================
 
 X_train, X_test, y_train, y_test = train_test_split(
@@ -80,10 +76,6 @@ X_train, X_test, y_train, y_test = train_test_split(
     test_size=0.2,
     random_state=42
 )
-
-# ============================================================
-# MODELO
-# ============================================================
 
 modelo = RandomForestClassifier(
     n_estimators=100,
@@ -96,7 +88,7 @@ modelo.fit(
 )
 
 # ============================================================
-# PREDIÇÃO
+# MÉTRICA
 # ============================================================
 
 pred = modelo.predict(X_test)
@@ -106,10 +98,6 @@ acc = accuracy_score(
     pred
 )
 
-# ============================================================
-# KPI
-# ============================================================
-
 st.metric(
     "Acurácia do Modelo",
     f"{acc:.2f}"
@@ -118,7 +106,7 @@ st.metric(
 st.markdown("---")
 
 # ============================================================
-# IMPORTÂNCIA DAS VARIÁVEIS
+# IMPORTÂNCIA
 # ============================================================
 
 st.subheader("Importância das Variáveis")
@@ -142,47 +130,79 @@ st.dataframe(
 )
 
 # ============================================================
-# PREDIÇÃO INDIVIDUAL
+# SIMULAÇÃO
 # ============================================================
 
 st.subheader("Simulação Clínica")
 
-idade = st.slider(
-    "Idade",
-    18,
-    100,
-    60
+entrada = {}
+
+# ============================================================
+# IDADE
+# ============================================================
+
+if "idade" in features:
+
+    idade = st.slider(
+        "Idade",
+        18,
+        100,
+        60
+    )
+
+    entrada["idade"] = idade
+
+# ============================================================
+# HBA1C
+# ============================================================
+
+if "hba1c" in features:
+
+    hba1c = st.slider(
+        "HbA1c",
+        5.0,
+        15.0,
+        9.0
+    )
+
+    entrada["hba1c"] = hba1c
+
+# ============================================================
+# CLASSES
+# ============================================================
+
+if "n_classes_pre" in features:
+
+    classes = st.slider(
+        "Número de Classes Terapêuticas",
+        1,
+        5,
+        2
+    )
+
+    entrada["n_classes_pre"] = classes
+
+# ============================================================
+# DATAFRAME
+# ============================================================
+
+entrada_df = pd.DataFrame(
+    [entrada]
 )
 
-hba1c = st.slider(
-    "HbA1c",
-    5.0,
-    15.0,
-    9.0
-)
-
-classes = st.slider(
-    "Número de Classes Terapêuticas",
-    1,
-    5,
-    2
-)
-
-entrada = pd.DataFrame({
-
-    "idade": [idade],
-    "hba1c": [hba1c],
-    "n_classes_pre": [classes]
-
-})
+# ============================================================
+# PROBABILIDADE
+# ============================================================
 
 prob = modelo.predict_proba(
-    entrada
+    entrada_df
 )[0][1]
 
 # ============================================================
 # RESULTADO
 # ============================================================
+
+st.markdown("---")
 
 if prob >= 0.7:
 
@@ -207,5 +227,5 @@ else:
 # ============================================================
 
 st.success(
-    "Modelo preditivo carregado."
+    "Modelo preditivo carregado com sucesso!"
 )
