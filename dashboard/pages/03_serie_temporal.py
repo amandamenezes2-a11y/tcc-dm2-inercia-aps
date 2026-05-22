@@ -16,7 +16,7 @@ st.title("📈 Monitoramento Longitudinal")
 st.markdown("---")
 
 # ============================================================
-# CONEXÃO
+# CONEXÃO DUCKDB
 # ============================================================
 
 conn = duckdb.connect(
@@ -25,7 +25,7 @@ conn = duckdb.connect(
 )
 
 # ============================================================
-# QUERY
+# CARREGAMENTO DOS DADOS
 # ============================================================
 
 df = conn.execute("""
@@ -36,7 +36,7 @@ FROM tb_inercia_dm2
 """).fetchdf()
 
 # ============================================================
-# CRIA DATA FAKE (caso não exista)
+# CRIA DATA FAKE (SE NÃO EXISTIR)
 # ============================================================
 
 if "data_evento" not in df.columns:
@@ -48,7 +48,7 @@ if "data_evento" not in df.columns:
     )
 
 # ============================================================
-# CONVERSÃO
+# CONVERSÃO DE DATA
 # ============================================================
 
 df["data_evento"] = pd.to_datetime(
@@ -56,7 +56,7 @@ df["data_evento"] = pd.to_datetime(
 )
 
 # ============================================================
-# AGREGAÇÃO MENSAL
+# SÉRIE TEMPORAL MENSAL
 # ============================================================
 
 serie = (
@@ -64,7 +64,7 @@ serie = (
     .groupby(
         pd.Grouper(
             key="data_evento",
-            freq="M"
+            freq="ME"
         )
     )["inercia_terapeutica"]
     .mean()
@@ -76,7 +76,7 @@ serie["inercia_terapeutica"] = (
 )
 
 # ============================================================
-# KPI
+# KPIs
 # ============================================================
 
 col1, col2 = st.columns(2)
@@ -97,7 +97,9 @@ st.markdown("---")
 # GRÁFICO
 # ============================================================
 
-st.subheader("Prevalência de Inércia Terapêutica ao Longo do Tempo")
+st.subheader(
+    "Prevalência de Inércia Terapêutica ao Longo do Tempo"
+)
 
 fig, ax = plt.subplots(figsize=(12,5))
 
@@ -142,4 +144,4 @@ st.download_button(
 # FINAL
 # ============================================================
 
-st.success("Série temporal carregada.")
+st.success("Monitoramento longitudinal carregado com sucesso!")
