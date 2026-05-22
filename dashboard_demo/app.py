@@ -1,5 +1,4 @@
 import streamlit as st
-import duckdb
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -9,70 +8,94 @@ import seaborn as sns
 # ============================================================
 
 st.set_page_config(
-    page_title="Vigilância DM2 APS",
+    page_title="Vigilância Clínica DM2",
+    page_icon="📊",
     layout="wide"
 )
+
+# ============================================================
+# SIDEBAR
+# ============================================================
+
+st.sidebar.title("📌 Vigilância DM2 APS")
+
+st.sidebar.markdown("""
+Dashboard demonstrativa para vigilância clínica
+de inércia terapêutica em Diabetes Mellitus tipo 2
+na Atenção Primária à Saúde.
+""")
+
+st.sidebar.markdown("---")
+
+sexo_filtro = st.sidebar.multiselect(
+    "Sexo",
+    ["Masculino", "Feminino"],
+    default=["Masculino", "Feminino"]
+)
+
+hba1c_min = st.sidebar.slider(
+    "HbA1c mínima",
+    4.0,
+    15.0,
+    7.0
+)
+
+st.sidebar.markdown("---")
+
+st.sidebar.info(
+    "Base demonstrativa anonimizada."
+)
+
+# ============================================================
+# TÍTULO
+# ============================================================
 
 st.title("📊 Vigilância Clínica DM2 - APS")
 st.markdown("---")
 
 # ============================================================
-# MODO DEMO
+# BASE DEMO
 # ============================================================
 
-MODO_DEMO = True
+df = pd.read_csv(
+    "data/demo/coorte_demo.csv"
+)
+
+df["co_prontuario"] = range(1, len(df) + 1)
 
 # ============================================================
-# CARREGAMENTO DOS DADOS
+# FILTROS
 # ============================================================
 
-if MODO_DEMO:
-
-    df = pd.read_csv(
-        "data/demo/coorte_demo.csv"
-    )
-
-    # cria coluna fake para manter dashboard
-    df["co_prontuario"] = range(1, len(df) + 1)
-
-else:
-
-    conn = duckdb.connect(
-        "data/duckdb/inercia_aps.duckdb"
-    )
-
-    df = conn.execute("""
-
-    SELECT *
-    FROM tb_inercia_dm2
-
-    """).fetchdf()
+df = df[
+    (df["sexo"].isin(sexo_filtro))
+    &
+    (df["hba1c"] >= hba1c_min)
+]
 
 # ============================================================
-# INDICADORES PRINCIPAIS
+# KPIs
 # ============================================================
 
 prevalencia = (
-    df["inercia_terapeutica"]
-    .mean()
-    * 100
-)
+    df["inercia_terapeutica"].mean()
+) * 100
 
 hba1c_media = df["hba1c"].mean()
 
-total_pacientes = df["co_prontuario"].nunique()
+pacientes = df["co_prontuario"].nunique()
 
-total_eventos = len(df)
+eventos = len(df)
 
 # ============================================================
-# MÉTRICAS
+# CARDS
 # ============================================================
 
 col1, col2, col3, col4 = st.columns(4)
 
 col1.metric(
     "Prevalência de Inércia",
-    f"{prevalencia:.2f}%"
+    f"{prevalencia:.1f}%"
 )
 
 col2.metric(
@@ -82,89 +105,93 @@ col2.metric(
 
 col3.metric(
     "Pacientes",
-    total_pacientes
+    pacientes
 )
 
 col4.metric(
     "Eventos",
-    total_eventos
+    eventos
 )
 
 st.markdown("---")
 
 # ============================================================
-# DISTRIBUIÇÃO HbA1c
+# GRÁFICOS
 # ============================================================
 
-st.subheader("Distribuição HbA1c")
-
-fig, ax = plt.subplots(figsize=(10, 5))
-
-# remove valores absurdos
-df_plot = df[
-    (df["hba1c"] >= 4) &
-    (df["hba1c"] <= 20)
-]
-
-sns.histplot(
-    data=df_plot,
-    x="hba1c",
-    bins=20,
-    kde=True,
-    ax=ax
-)
-
-# linha meta terapêutica
-ax.axvline(
-    7,
-    color="green",
-    linestyle="--",
-    linewidth=2,
-    label="Meta terapêutica"
-)
-
-# linha alto risco
-ax.axvline(
-    9,
-    color="red",
-    linestyle="--",
-    linewidth=2,
-    label="Alto risco"
-)
-
-ax.set_xlabel("HbA1c (%)")
-ax.set_ylabel("Frequência")
-ax.set_title("Distribuição de HbA1c")
-ax.legend()
-
-st.pyplot(fig)
+col_graf1, col_graf2 = st.columns(2)
 
 # ============================================================
-# INÉRCIA TERAPÊUTICA
+# HISTOGRAMA
 # ============================================================
 
-st.subheader("Inércia Terapêutica")
+with col_graf1:
 
-contagem = (
-    df["inercia_terapeutica"]
-    .value_counts()
-)
+    st.subheader("Distribuição HbA1c")
 
-fig2, ax2 = plt.subplots()
+    fig, ax = plt.subplots(figsize=(8,5))
 
-ax2.pie(
-    contagem,
-    labels=["Sem Inércia", "Inércia"],
-    autopct="%1.1f%%"
-)
+    sns.histplot(
+        data=df,
+        x="hba1c",
+        bins=20,
+        kde=True,
+        ax=ax
+    )
 
-st.pyplot(fig2)
+    ax.axvline(
+        7,
+        color="green",
+        linestyle="--",
+        linewidth=2,
+        label="Meta terapêutica"
+    )
+
+    ax.axvline(
+        9,
+        color="red",
+        linestyle="--",
+        linewidth=2,
+        label="Alto risco"
+    )
+
+    ax.set_xlabel("HbA1c (%)")
+    ax.set_ylabel("Frequência")
+
+    ax.legend()
+
+    st.pyplot(fig)
+
+# ============================================================
+# PIZZA
+# ============================================================
+
+with col_graf2:
+
+    st.subheader("Inércia Terapêutica")
+
+    contagem = (
+        df["inercia_terapeutica"]
+        .value_counts()
+    )
+
+    fig2, ax2 = plt.subplots(figsize=(6,6))
+
+    ax2.pie(
+        contagem,
+        labels=["Inércia", "Sem Inércia"],
+        autopct="%1.1f%%"
+    )
+
+    st.pyplot(fig2)
+
+st.markdown("---")
 
 # ============================================================
 # PACIENTES PRIORITÁRIOS
 # ============================================================
 
-st.subheader("Pacientes Prioritários")
+st.subheader("🚨 Pacientes Prioritários")
 
 criticos = df[
     (df["hba1c"] >= 10)
@@ -173,21 +200,32 @@ criticos = df[
 ]
 
 st.dataframe(
-    criticos.head(50)
+    criticos,
+    use_container_width=True
 )
 
 # ============================================================
-# TABELA ANALÍTICA
+# DOWNLOAD
 # ============================================================
 
-st.subheader("Tabela Analítica")
+csv = criticos.to_csv(index=False)
 
-st.dataframe(
-    df.head(100)
+st.download_button(
+    label="📥 Download CSV",
+    data=csv,
+    file_name="pacientes_prioritarios.csv",
+    mime="text/csv"
 )
 
 # ============================================================
-# FINAL
+# RODAPÉ
 # ============================================================
 
-st.success("Dashboard carregado com sucesso!")
+st.markdown("---")
+
+st.caption("""
+Projeto de vigilância clínica em Diabetes Mellitus tipo 2
+na Atenção Primária à Saúde.
+
+Dashboard demonstrativa desenvolvida para fins científicos.
+""")
