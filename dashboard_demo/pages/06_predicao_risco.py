@@ -1,8 +1,6 @@
 import streamlit as st
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
+import numpy as np
 
 # ============================================================
 # CONFIGURAÇÃO
@@ -13,7 +11,7 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("🧠 Predição de Inércia Terapêutica")
+st.title("🧠 Predição Clínica de Inércia Terapêutica")
 st.markdown("---")
 
 # ============================================================
@@ -25,92 +23,7 @@ df = pd.read_csv(
 )
 
 # ============================================================
-# FEATURES
-# ============================================================
-
-features = [
-    "idade",
-    "hba1c",
-    "n_classes_pre"
-]
-
-target = "inercia_terapeutica"
-
-# ============================================================
-# BASE MODELO
-# ============================================================
-
-base = df[
-    features + [target]
-].dropna()
-
-X = base[features]
-
-y = base[target]
-
-# ============================================================
-# TREINO
-# ============================================================
-
-X_train, X_test, y_train, y_test = train_test_split(
-    X,
-    y,
-    test_size=0.2,
-    random_state=42
-)
-
-modelo = RandomForestClassifier(
-    n_estimators=100,
-    random_state=42
-)
-
-modelo.fit(
-    X_train,
-    y_train
-)
-
-# ============================================================
-# ACURÁCIA
-# ============================================================
-
-pred = modelo.predict(X_test)
-
-acc = accuracy_score(
-    y_test,
-    pred
-)
-
-st.metric(
-    "Acurácia do Modelo",
-    f"{acc:.2f}"
-)
-
-st.markdown("---")
-
-# ============================================================
-# IMPORTÂNCIA
-# ============================================================
-
-st.subheader("Importância das Variáveis")
-
-importancia = pd.DataFrame({
-
-    "Variável": features,
-
-    "Importância": modelo.feature_importances_
-
-})
-
-st.dataframe(
-    importancia.sort_values(
-        "Importância",
-        ascending=False
-    ),
-    use_container_width=True
-)
-
-# ============================================================
-# SIMULAÇÃO
+# SCORE SIMPLIFICADO
 # ============================================================
 
 st.subheader("Simulação Clínica")
@@ -136,46 +49,71 @@ classes = st.slider(
     2
 )
 
-entrada = pd.DataFrame({
+# ============================================================
+# SCORE CLÍNICO
+# ============================================================
 
-    "idade": [idade],
+score = (
+    (hba1c * 0.6)
+    +
+    (classes * 8)
+    +
+    (idade * 0.1)
+)
 
-    "hba1c": [hba1c],
-
-    "n_classes_pre": [classes]
-
-})
-
-prob = modelo.predict_proba(
-    entrada
-)[0][1]
+# normalização
+prob = min(score / 20, 1)
 
 # ============================================================
 # RESULTADO
 # ============================================================
 
+st.markdown("---")
+
+st.metric(
+    "Probabilidade Estimada",
+    f"{prob:.1%}"
+)
+
 if prob >= 0.7:
 
     st.error(
-        f"🔴 Alto risco ({prob:.1%})"
+        "🔴 Alto risco de inércia terapêutica"
     )
 
 elif prob >= 0.4:
 
     st.warning(
-        f"🟠 Risco moderado ({prob:.1%})"
+        "🟠 Risco moderado"
     )
 
 else:
 
     st.success(
-        f"🟢 Baixo risco ({prob:.1%})"
+        "🟢 Baixo risco"
     )
+
+# ============================================================
+# INTERPRETAÇÃO
+# ============================================================
+
+st.markdown("---")
+
+st.subheader("Interpretação Clínica")
+
+st.write("""
+O modelo demonstrativo utiliza:
+- HbA1c;
+- intensidade terapêutica;
+- idade;
+
+para estimar risco clínico de inércia terapêutica.
+""")
 
 # ============================================================
 # FINAL
 # ============================================================
 
 st.success(
-    "Modelo preditivo demo carregado."
+    "Predição clínica demo carregada."
 )
