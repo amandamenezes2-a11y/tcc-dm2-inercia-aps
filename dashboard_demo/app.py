@@ -331,3 +331,42 @@ with col2:
     )
 
     st.pyplot(fig2)
+
+# ============================================================
+# RODAPÉ CIENTÍFICO
+# ============================================================
+
+st.markdown("---")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.caption(
+        """
+        🎓 Universidade Federal da Bahia
+        """
+    )
+
+with col2:
+    st.caption(
+        """
+        💊 Curso de Farmácia
+        """
+    )
+
+with col3:
+    st.caption(
+        """
+        📊 Versão 1.0
+        """
+    )
+
+st.caption(
+    """
+    Sistema de Vigilância Clínica da Inércia Terapêutica em Diabetes Mellitus Tipo 2 na Atenção Primária à Saúde.
+
+    Desenvolvido por Amanda Menezes dos Santos.
+
+    Orientação: Prof. Dr. Sóstenes Mistro.
+    """
+)
