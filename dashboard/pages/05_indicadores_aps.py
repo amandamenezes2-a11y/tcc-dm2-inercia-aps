@@ -2,6 +2,7 @@ import streamlit as st
 import duckdb
 import pandas as pd
 import matplotlib.pyplot as plt
+from io import BytesIO
 
 # ============================================================
 # CONFIGURAÇÃO
@@ -143,12 +144,35 @@ st.subheader("Base Analítica")
 
 st.dataframe(
     df.head(100),
-    use_container_width=True
+    width="stretch"
 )
+
+# ============================================================
+# FUNÇÃO EXCEL
+# ============================================================
+
+def gerar_excel(df):
+
+    output = BytesIO()
+
+    with pd.ExcelWriter(
+        output,
+        engine="openpyxl"
+    ) as writer:
+
+        df.to_excel(
+            writer,
+            index=False,
+            sheet_name="IndicadoresAPS"
+        )
+
+    return output.getvalue()
 
 # ============================================================
 # DOWNLOAD
 # ============================================================
+
+excel = gerar_excel(df)
 
 csv = df.to_csv(index=False)
 
@@ -159,6 +183,12 @@ st.download_button(
     "text/csv"
 )
 
+st.download_button(
+    "📊 Download Excel",
+    excel,
+    "base_analitica.xlsx",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
 # ============================================================
 # FINAL
 # ============================================================

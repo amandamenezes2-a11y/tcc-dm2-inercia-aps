@@ -1,6 +1,7 @@
 import streamlit as st
 import duckdb
 import pandas as pd
+from io import BytesIO
 
 # ============================================================
 # CONFIGURAÇÃO
@@ -100,12 +101,31 @@ st.subheader("Pacientes Monitorados")
 
 st.dataframe(
     df,
-    use_container_width=True
+    width="stretch"
 )
+
+def gerar_excel(df):
+
+    output = BytesIO()
+
+    with pd.ExcelWriter(
+        output,
+        engine="openpyxl"
+    ) as writer:
+
+        df.to_excel(
+            writer,
+            index=False,
+            sheet_name="Monitoramento"
+        )
+
+    return output.getvalue()
 
 # ============================================================
 # DOWNLOAD
 # ============================================================
+
+excel = gerar_excel(df)
 
 csv = df.to_csv(index=False)
 
@@ -114,6 +134,13 @@ st.download_button(
     csv,
     "monitoramento_clinico.csv",
     "text/csv"
+)
+
+st.download_button(
+    "📊 Download Excel",
+    excel,
+    "monitoramento_clinico.xlsx",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
 
 # ============================================================

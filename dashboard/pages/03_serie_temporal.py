@@ -124,12 +124,37 @@ st.subheader("Tabela Temporal")
 
 st.dataframe(
     serie,
-    use_container_width=True
+    width="stretch"
 )
+
+# ============================================================
+# FUNÇÃO EXCEL
+# ============================================================
+
+from io import BytesIO
+
+def gerar_excel(df):
+
+    output = BytesIO()
+
+    with pd.ExcelWriter(
+        output,
+        engine="openpyxl"
+    ) as writer:
+
+        df.to_excel(
+            writer,
+            index=False,
+            sheet_name="SerieTemporal"
+        )
+
+    return output.getvalue()
 
 # ============================================================
 # DOWNLOAD
 # ============================================================
+
+excel = gerar_excel(serie)
 
 csv = serie.to_csv(index=False)
 
@@ -138,6 +163,13 @@ st.download_button(
     csv,
     "serie_temporal.csv",
     "text/csv"
+)
+
+st.download_button(
+    "📊 Download Excel",
+    excel,
+    "serie_temporal.xlsx",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
 
 # ============================================================

@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+from io import BytesIO
 
 # ============================================================
 # CONFIGURAÇÃO
@@ -68,12 +69,35 @@ st.subheader("Pacientes com HbA1c ≥ 10% e inércia terapêutica")
 
 st.dataframe(
     criticos,
-    use_container_width=True
+    width="stretch"
 )
+
+# ============================================================
+# FUNÇÃO EXCEL
+# ============================================================
+
+def gerar_excel(df):
+
+    output = BytesIO()
+
+    with pd.ExcelWriter(
+        output,
+        engine="openpyxl"
+    ) as writer:
+
+        df.to_excel(
+            writer,
+            index=False,
+            sheet_name="Pacientes"
+        )
+
+    return output.getvalue()
 
 # ============================================================
 # DOWNLOAD
 # ============================================================
+
+excel = gerar_excel(criticos)
 
 csv = criticos.to_csv(index=False)
 
@@ -82,6 +106,13 @@ st.download_button(
     data=csv,
     file_name="pacientes_prioritarios_demo.csv",
     mime="text/csv"
+)
+
+st.download_button(
+    label="📊 Download Excel",
+    data=excel,
+    file_name="pacientes_prioritarios_demo.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
 
 # ============================================================

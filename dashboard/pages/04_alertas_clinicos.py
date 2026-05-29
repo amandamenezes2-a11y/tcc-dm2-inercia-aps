@@ -1,6 +1,7 @@
 import streamlit as st
 import duckdb
 import pandas as pd
+from io import BytesIO
 
 # ============================================================
 # CONFIGURAÇÃO
@@ -102,12 +103,35 @@ st.dataframe(
         "hba1c",
         ascending=False
     ),
-    use_container_width=True
+    width="stretch"
 )
+
+# ============================================================
+# FUNÇÃO EXCEL
+# ============================================================
+
+def gerar_excel(df):
+
+    output = BytesIO()
+
+    with pd.ExcelWriter(
+        output,
+        engine="openpyxl"
+    ) as writer:
+
+        df.to_excel(
+            writer,
+            index=False,
+            sheet_name="Alertas"
+        )
+
+    return output.getvalue()
 
 # ============================================================
 # DOWNLOAD
 # ============================================================
+
+excel = gerar_excel(alertas)
 
 csv = alertas.to_csv(index=False)
 
@@ -116,6 +140,13 @@ st.download_button(
     csv,
     "alertas_clinicos.csv",
     "text/csv"
+)
+
+st.download_button(
+    "📊 Download Excel",
+    excel,
+    "alertas_clinicos.xlsx",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
 
 # ============================================================

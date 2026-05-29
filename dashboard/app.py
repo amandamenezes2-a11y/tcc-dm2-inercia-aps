@@ -105,12 +105,34 @@ df["risco_clinico"] = (
 # TÍTULO
 # ============================================================
 
-st.title("📊 Vigilância Clínica DM2 - APS")
+# ============================================================
+# CABEÇALHO INSTITUCIONAL
+# ============================================================
 
-st.markdown("""
-Dashboard operacional para monitoramento longitudinal
-de indivíduos com Diabetes Mellitus tipo 2.
-""")
+col_logo, col_titulo = st.columns([1,5])
+
+with col_logo:
+
+    st.image(
+        "assets/logo_ufba.jpeg",
+        width=140
+    )
+
+with col_titulo:
+
+    st.title(
+        "Vigilância Clínica da Inércia Terapêutica em Diabetes Mellitus Tipo 2 na Atenção Primária à Saúde"
+    )
+
+    st.caption(
+        """
+        Trabalho de Conclusão de Curso — Farmácia (UFBA)
+
+        Amanda Menezes dos Santos
+
+        Orientador: Prof. Dr. Sóstenes Mistro
+        """
+    )
 
 st.markdown("---")
 
@@ -256,7 +278,7 @@ prioritarios = df[
 
 st.dataframe(
     prioritarios,
-    use_container_width=True
+    width="stretch"
 )
 
 # ============================================================
@@ -279,3 +301,42 @@ st.download_button(
 st.markdown("---")
 
 st.success("Sistema operacional carregado com sucesso!")
+
+# ============================================================
+# RODAPÉ CIENTÍFICO
+# ============================================================
+
+st.markdown("---")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.caption(
+        """
+        🎓 Universidade Federal da Bahia
+        """
+    )
+
+with col2:
+    st.caption(
+        """
+        💊 Curso de Farmácia
+        """
+    )
+
+with col3:
+    st.caption(
+        """
+        📊 Versão 1.0
+        """
+    )
+
+st.caption(
+    """
+    Sistema de Vigilância Clínica da Inércia Terapêutica em Diabetes Mellitus Tipo 2 na Atenção Primária à Saúde.
+
+    Desenvolvido por Amanda Menezes dos Santos.
+
+    Orientação: Prof. Dr. Sóstenes Mistro.
+    """
+)

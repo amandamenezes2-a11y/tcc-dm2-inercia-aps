@@ -126,7 +126,7 @@ importancia = importancia.sort_values(
 
 st.dataframe(
     importancia,
-    use_container_width=True
+    width="stretch"
 )
 
 # ============================================================

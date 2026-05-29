@@ -14,21 +14,41 @@ st.set_page_config(
     layout="wide"
 )
 
-# =========================================================
+# ============================================================
 # TÍTULO
-# =========================================================
+# ============================================================
 
-st.title("📊 Vigilância Clínica DM2 — DEMO")
+# ============================================================
+# CABEÇALHO INSTITUCIONAL
+# ============================================================
 
-st.markdown(
-    """
-    ### 🔒 Ambiente Demonstrativo
+col_logo, col_titulo = st.columns([1,5])
 
-    Esta versão utiliza uma base sintética e anonimizada,
-    desenvolvida exclusivamente para demonstração pública
-    da plataforma de vigilância clínica em Diabetes Mellitus tipo 2.
-    """
-)
+with col_logo:
+
+    st.image(
+        "assets/logo_ufba.jpeg",
+        width=140
+    )
+
+with col_titulo:
+
+    st.title(
+        "Vigilância Clínica da Inércia Terapêutica em Diabetes Mellitus Tipo 2 na Atenção Primária à Saúde - Ambiente demonstrativo"
+       
+    )
+
+    st.caption(
+        """
+        Trabalho de Conclusão de Curso — Farmácia (UFBA)
+
+        Amanda Menezes dos Santos
+
+        Orientador: Prof. Dr. Sóstenes Mistro
+        """
+    )
+
+st.markdown("---")
 
 # =========================================================
 # MODO DEMO

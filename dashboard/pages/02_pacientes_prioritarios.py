@@ -1,6 +1,7 @@
 import streamlit as st
 import duckdb
 import pandas as pd
+from io import BytesIO
 
 # ============================================================
 # CONEXÃO
@@ -168,11 +169,35 @@ styled_table = tabela.style.map(
 
 st.dataframe(
     styled_table,
-    use_container_width=True
+    width="stretch"
 )
+
+# ============================================================
+# FUNÇÃO EXCEL
+# ============================================================
+
+def gerar_excel(df):
+
+    output = BytesIO()
+
+    with pd.ExcelWriter(
+        output,
+        engine="openpyxl"
+    ) as writer:
+
+        df.to_excel(
+            writer,
+            index=False,
+            sheet_name="Pacientes"
+        )
+
+    return output.getvalue()
+
 # ============================================================
 # DOWNLOAD
 # ============================================================
+
+excel = gerar_excel(df_prioritarios)
 
 csv = df_prioritarios.to_csv(index=False).encode("utf-8")
 
@@ -181,4 +206,11 @@ st.download_button(
     data=csv,
     file_name="pacientes_prioritarios.csv",
     mime="text/csv"
+)
+
+st.download_button(
+    label="📊 Baixar Excel",
+    data=excel,
+    file_name="pacientes_prioritarios.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )

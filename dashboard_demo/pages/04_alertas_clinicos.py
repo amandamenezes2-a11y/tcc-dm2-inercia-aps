@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+from io import BytesIO
 
 # ============================================================
 # CONFIGURAÇÃO
@@ -86,7 +87,7 @@ st.dataframe(
         "hba1c",
         ascending=False
     ),
-    use_container_width=True
+    width="stretch"
 )
 
 # ============================================================
